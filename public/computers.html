@@ -71,40 +71,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="./computers.js"></script>
 
-    <script>
-        
-        
-        document.getElementById('removeSoftwareButton').addEventListener('click', function() {
-            const PK_Computer = document.getElementById('computer-id').textContent; // ID компьютера
-            const PK_Software = document.getElementById('softwareSelect').value; // ID выбранного ПО
+    <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
 
-            if (!PK_Software) {
-                alert('Выберите ПО для удаления');
-                return;
-            }
-
-            fetch('/api/remove-software', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ PK_Computer, PK_Software })
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('ПО удалено успешно');
-                    // Обновить список ПО в модальном окне или выполнить другие действия
-                } else {
-                    response.text().then(msg => alert('Ошибка: ' + msg));
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка:', error);
-                //alert('Ошибка при удалении ПО');
-            });
-        });
-        
-    </script>
 
 </body>
 </html>

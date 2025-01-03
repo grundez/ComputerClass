@@ -77,6 +77,9 @@ async function loadComputers() {
         
             const softwareList = installedSoftware.map(software => `<li>${software}</li>`).join('');
         
+            // Обновляем список ПО в модальном окне
+            updateSoftwareList(computer.PK_Computer);
+
             const modal = $(this);
             modal.find('#computer-id').text(computer.PK_Computer);
             modal.find('#computer-name').text(computer.Domain_name);
@@ -85,58 +88,11 @@ async function loadComputers() {
             modal.find('#gpu').text(computer.GPU);
             modal.find('#software-list').html(softwareList);
         
-            // Обработчик кнопки для установки ПО
-            $('#installSoftwareButton').on('click', async function() {
-                const softwareId = $('#softwareSelect').val();  // Получаем выбранное ПО
-                const actualVersion = '1.0';  // Пример версии, можно добавить поле для ввода
-                const downloadDate = new Date().toISOString();  // Дата установки
-
-                if (softwareId) {
-                    const data = {
-                        PK_Computer: computer.PK_Computer,
-                        PK_Software: softwareId,
-                        Actual_version: actualVersion,
-                        Download_date: downloadDate
-                    };
-
-                    // Логируем отправляемые данные
-                    console.log('Отправляемые данные:', data);
-
-                    try {
-                        const response = await fetch('/api/install-software', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        });
-
-                        // Проверяем ответ от сервера
-                        const responseText = await response.text();
-                        console.log('Ответ от сервера:', responseText);
-
-                        if (response.ok) {
-                            alert('ПО установлено успешно!');
-                            // Закрыть модальное окно
-                            $('#computerModal').modal('hide');
-                            // Перезагрузить данные или обновить список ПО
-                        } else {
-                            //alert('Ошибка при установке ПО: ' + responseText);
-                        }
-                    } catch (error) {
-                        //console.error('Ошибка при установке ПО:', error);
-                        //alert('Ошибка при установке ПО');
-                    }
-                } else {
-                    alert('Выберите ПО для установки');
-                }
-            });
+            
 
         });
         
-        
-        
-        
+
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
     }
@@ -172,63 +128,136 @@ window.onload = function() {
 };
 
 
-// Функция для обновления списка ПО и добавления кнопки удаления
-function updateSoftwareList(computerId, softwareList) {
-    const softwareListElement = document.getElementById('software-list');
-    softwareListElement.innerHTML = ''; // Очищаем список перед добавлением новых элементов
+async function updateSoftwareList(computerId) {
+    try {
+        // Запросим обновленный список ПО для конкретного компьютера
+        const response = await fetch(`/api/computers/${computerId}/software`);
+        const softwareData = await response.json(); // Получаем данные ПО
 
-    softwareList.forEach(software => {
-        const listItem = document.createElement('li');
-        listItem.setAttribute('data-computer-id', computerId);
-        listItem.setAttribute('data-software-id', software.PK_Software);
+        const softwareListElement = document.getElementById('software-list');
+        softwareListElement.innerHTML = ''; // Очищаем список
 
-        // Формируем содержимое элемента списка
-        listItem.innerHTML = `
-            ${software.name} (${software.version})
-        `;
+        if (softwareData.length === 0) {
+            softwareListElement.innerHTML = '<li>Нет установленного ПО</li>';
+            return;
+        }
 
-        // Добавляем элемент в список
-        softwareListElement.appendChild(listItem);
-    });
+        softwareData.forEach(software => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${software.Name} (версия: ${software.Actual_version})`;
+            softwareListElement.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error('Ошибка при обновлении списка ПО:', error);
+    }
 }
 
-// Функция для установки ПО
-document.getElementById('installSoftwareButton').addEventListener('click', function() {
+
+
+
+
+document.getElementById('installSoftwareButton').addEventListener('click', async function () {
     const computerId = document.getElementById('computer-id').textContent;
     const softwareId = document.getElementById('softwareSelect').value;
-    
-    if (softwareId) {
-        installSoftware(computerId, softwareId);
-    } else {
-        alert('Выберите ПО для установки');
+    if (!softwareId) {
+        alert('Выберите ПО для установки!');
+        return;
     }
-});
 
-// Функция для установки ПО
-async function installSoftware(computerId, softwareId) {
     try {
         const response = await fetch('/api/install-software', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 PK_Computer: computerId,
                 PK_Software: softwareId,
-                Actual_version: '1.0', // Установите актуальную версию
+                Actual_version: '1.0',
                 Download_date: new Date().toISOString(),
             }),
         });
-
-        const result = await response.text();
-
+        const responseBody = await response.text(); // Получите тело ответа
+        
         if (response.ok) {
-            alert('ПО успешно установлено!');
+            showNotification('ПО успешно установлено!', 'success');
+            await updateSoftwareList(computerId); // Обновляем список ПО
         } else {
-            alert('Ошибка: ' + result);
+            const errorMessage = await response.text();
+            showNotification(`Ошибка установки ПО: ${errorMessage}`, 'danger');
         }
     } catch (error) {
         console.error('Ошибка при установке ПО:', error);
-        //alert('Ошибка при установке ПО');
+        showNotification('Ошибка установки ПО', 'danger');
     }
+    
+});
+
+
+document.getElementById('removeSoftwareButton').addEventListener('click', async function () {
+    const computerId = document.getElementById('computer-id').textContent;
+    const softwareId = document.getElementById('softwareSelect').value;
+
+    if (!softwareId) {
+        alert('Выберите ПО для удаления');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/remove-software', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ PK_Computer: computerId, PK_Software: softwareId }),
+        });
+
+        if (response.ok) {
+            showNotification('ПО успешно удалено!', 'success');
+            await updateSoftwareList(computerId); // Обновляем список ПО
+        } else {
+            const errorMessage = await response.text();
+            showNotification(`Ошибка удаления ПО: ${errorMessage}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении ПО:', error);
+        showNotification('Ошибка удаления ПО', 'danger');
+    }
+});
+
+
+
+
+
+function showNotification(message, type = 'info') {
+    const notificationContainer = document.getElementById('notification-container') || createNotificationContainer();
+    const notification = document.createElement('div');
+
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.role = 'alert';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    notificationContainer.appendChild(notification);
+
+    // Автоматическое скрытие уведомления через 5 секунд
+    setTimeout(() => {
+        if (notificationContainer.contains(notification)) {
+            notification.remove();
+        }
+    }, 5000);
 }
+
+function createNotificationContainer() {
+    const existingContainer = document.getElementById('notification-container');
+    if (existingContainer) return existingContainer;
+
+    const container = document.createElement('div');
+    container.id = 'notification-container';
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '1050';
+    document.body.appendChild(container);
+    return container;
+}
+
+

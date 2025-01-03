@@ -37,12 +37,13 @@
                             <th>Время</th>
                             <th>Действие</th>
                             <th>IP-адрес</th>
+                            <th>Компьютер</th> <!-- Новая колонка -->
                         </tr>
                     </thead>
                     <tbody id="logs">
                         <!-- Логи пользователя будут подгружены через JS -->
                     </tbody>
-                </table>
+                </table>               
             </div>
         </div>
     </div>
@@ -97,10 +98,10 @@
                     <td>${formattedTime}</td>
                     <td>${log.Action}</td>
                     <td>${log.IP_address}</td>
+                    <td>${log.Domain_name}</td>
                 `;
                 logsTable.appendChild(logRow);
             });
-
 
             // Подготовка данных для графика активности
             const groupedData = {};

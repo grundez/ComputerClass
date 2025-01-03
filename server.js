@@ -128,7 +128,7 @@ app.get('/api/most_active_computer', async (req, res) => {
 });
 
 
-app.post('/api/install-software', (req, res) => {
+app.post('/api/install-software', async (req, res) => {
     console.log('Запрос получен на /api/install-software');
     const { PK_Computer, PK_Software, Actual_version, Download_date } = req.body;
     console.log('Полученные данные:', req.body);
@@ -139,24 +139,60 @@ app.post('/api/install-software', (req, res) => {
         ON CONFLICT ("PK_Computer", "PK_Software") DO NOTHING;
     `;
 
-    db.query(insertQuery, [PK_Computer, Actual_version, Download_date, PK_Software], (err, result) => {
-        if (err) {
-            console.error('Ошибка при добавлении записи:', err);
-            res.status(500).send('Ошибка базы данных');
+    try {
+        console.log('Создаю запрос');
+        const result = await db.query(insertQuery, [PK_Computer, Actual_version, Download_date, PK_Software]);
+
+        console.log('Результат запроса:', result);
+
+        if (result.rowCount === 0) {
+            console.log('Запись уже существует');
+            return res.status(409).send('Запись уже существует');
         } else {
-            if (result.rowCount === 0) {
-                console.log('Запись уже существует');
-                res.status(409).send('Запись уже существует');
-            } else {
-                console.log('Запись добавлена успешно');
-                res.status(200).send('ПО установлено успешно');
-            }
+            console.log('Запись добавлена успешно');
+            return res.status(200).send('ПО установлено успешно');
         }
-    });
+    } catch (err) {
+        console.error('Ошибка при добавлении записи:', err);
+        return res.status(500).send('Ошибка базы данных');
+    }
+});
 
-})
 
-app.delete('/api/remove-software', (req, res) => {
+app.get('/api/computers/:id/software', async (req, res) => {
+    const { id } = req.params;
+    //console.log('Запрос на получение ПО для компьютера:', id);
+
+    const selectQuery = `
+        SELECT s."PK_Software", s."Name", cs."Actual_version"
+        FROM "Software" s
+        JOIN "Computer_Software" cs ON cs."PK_Software" = s."PK_Software"
+        WHERE cs."PK_Computer" = $1;
+    `;
+
+    try {
+        const result = await db.query(selectQuery, [id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).send('ПО не найдено для этого компьютера');
+        }
+
+        const softwareList = result.rows.map(row => ({
+            PK_Software: row.PK_Software,
+            Name: row.Name,
+            Actual_version: row.Actual_version
+        }));
+
+        //console.log('Найденное ПО:', softwareList);
+        return res.status(200).json(softwareList);
+    } catch (err) {
+        console.error('Ошибка при получении списка ПО:', err);
+        return res.status(500).send('Ошибка базы данных');
+    }
+});
+
+
+app.delete('/api/remove-software', async (req, res) => {
     const { PK_Computer, PK_Software } = req.body;
 
     const query = `
@@ -164,15 +200,25 @@ app.delete('/api/remove-software', (req, res) => {
         WHERE "PK_Computer" = $1 AND "PK_Software" = $2;
     `;
     
-    db.query(query, [PK_Computer, PK_Software], (err, result) => {  // Используем db.query
-        if (err) {
-            console.error('Ошибка при удалении ПО:', err);
-            return res.status(500).send('Ошибка базы данных');
+    try {
+        console.log('Перед запросом к базе данных для удаления');
+        const result = await db.query(query, [PK_Computer, PK_Software]);
+        console.log('Результат удаления:', result);
+
+        if (result.rowCount === 0) {
+            console.log('Запись не найдена для удаления');
+            return res.status(404).send('ПО не найдено для удаления');
         }
 
-        res.status(200).send('ПО удалено успешно');
-    });
+        console.log('ПО успешно удалено');
+        return res.status(200).send('ПО удалено успешно');
+    } catch (err) {
+        console.error('Ошибка при удалении ПО:', err);
+        return res.status(500).send('Ошибка базы данных');
+    }
 });
+
+
 
 // Маршрут для получения списка ролей (без защиты)
 app.get('/api/roles', (req, res) => {
@@ -311,7 +357,6 @@ app.get('/api/account', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Пользователь не авторизован' });
     }
-
     const userId = req.session.user.PK_User;  // Получаем ID пользователя из сессии
 
     try {
@@ -353,20 +398,21 @@ app.get('/api/account', async (req, res) => {
             [userId]
         );
 
-        // Получение последних 5 логов пользователя
+        // Получение последних 5 логов пользователя с Domain_name
         const logsResult = await db.query(
-            `SELECT "Action", "Action_date", "Action_time", "IP_address"
-             FROM "Logs"
-             WHERE "PK_Computer" IN (
+            `SELECT l."Action", l."Action_date", l."Action_time", l."IP_address", c."Domain_name"
+             FROM "Logs" l
+             JOIN "Computer" c ON l."PK_Computer" = c."PK_Computer"
+             WHERE l."PK_Computer" IN (
                  SELECT "PK_Computer" FROM "Account_Computer" WHERE "PK_Account" = (
                      SELECT "PK_Account" FROM "Account" WHERE "PK_User" = $1
                  )
              )
-             ORDER BY "Action_date" DESC, "Action_time" DESC
+             ORDER BY l."Action_date" DESC, l."Action_time" DESC
              LIMIT 5`,
             [userId]
         );
-
+        console.log(roleResult.rows[0].Name);
         res.json({
             user: userResult.rows[0],
             role: roleResult.rows[0].Name,
@@ -390,6 +436,27 @@ app.post('/api/reports/:id/generate', async (req, res) => {
     } catch (err) {
         console.error('Ошибка генерации отчёта:', err);
         res.status(500).json({ error: 'Ошибка генерации отчёта' });
+    }
+});
+
+// Маршрут для получения топ-10 самых активных компьютеров
+app.get('/api/most_active_computers', async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT c."Domain_name", 
+                    SUM(EXTRACT(EPOCH FROM ac."Session_time") / 3600) AS "TotalSessionTime"
+             FROM "Account_Computer" ac
+             JOIN "Computer" c ON ac."PK_Computer" = c."PK_Computer"
+             WHERE ac."Session_time" >= date_trunc('month', CURRENT_DATE)
+             GROUP BY c."Domain_name"
+             ORDER BY "TotalSessionTime" DESC
+             LIMIT 10`
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Ошибка получения данных о самых активных компьютерах:', err);
+        res.status(500).json({ error: 'Ошибка получения данных' });
     }
 });
 
@@ -449,7 +516,9 @@ app.get('/logout', (req, res) => {
 
 app.post('/add_user', async (req, res) => {
     const { name, surname, gender, login, password, phone, dob } = req.body;
-
+    console.log("Хэшируем пароль:", password);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Хэш пароля перед сохранением:", hashedPassword);
     try {
         if (!name || !surname || !login || !phone || !dob || !gender || !password) {
             return res.status(400).json({ success: false, message: 'Все поля обязательны для заполнения.' });
@@ -469,7 +538,26 @@ app.post('/add_user', async (req, res) => {
         // Вставка данных в таблицу Account
         const accountResult = await db.query(
             'INSERT INTO "Account" ("Login", "Password", "PK_User") VALUES ($1, $2, $3)',
-            [login, password, userId]
+            [login, hashedPassword, userId]
+        );
+
+        const accountId = accountResult.rows[0].PK_Account; // Получаем PK_Account
+
+        const roleResult = await db.query(
+            'SELECT "PK_Role" FROM "Role" WHERE "Name" = $1',
+            [role]
+        );
+
+        if (roleResult.rowCount === 0) {
+            throw new Error('Роль не найдена');
+        }
+
+        const roleId = roleResult.rows[0].PK_Role;
+
+        // Вставка данных в таблицу Account_Role
+        await db.query(
+            'INSERT INTO "Account_Role" ("PK_Role", "Reached_date", "PK_Account") VALUES ($1, NOW(), $2)',
+            [roleId, accountId]
         );
 
         // Завершаем транзакцию

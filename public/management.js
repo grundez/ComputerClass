@@ -165,12 +165,12 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 
 // Загружаем пользователей при загрузке страницы
 window.onload = loadUsers;
-
 document.getElementById("save-user-btn").addEventListener("click", async () => {
     // Получаем данные из формы
     const name = document.getElementById("user-name").value;
     const surname = document.getElementById("user-surname").value;
     const gender = document.getElementById("user-gender").value;
+    const role = document.getElementById("user-role").value;
     const login = document.getElementById("user-login").value;
     const password = document.getElementById("user-password").value;
     const phone = document.getElementById("user-phone").value;
@@ -181,6 +181,7 @@ document.getElementById("save-user-btn").addEventListener("click", async () => {
         name,
         surname,
         gender,
+        role,
         login,
         password,
         phone,
@@ -200,6 +201,7 @@ document.getElementById("save-user-btn").addEventListener("click", async () => {
             throw new Error('Ошибка при добавлении пользователя');
         }
         else{
+            console.log(password);
             alert("Пользователь успешно добавлен!");
         }
 
@@ -219,42 +221,19 @@ document.getElementById('delete-user-btn').addEventListener('click', async () =>
         return;
     }
 
-    fetch('http://localhost:3000/delete_user', {
+    const response = await fetch('http://localhost:3000/delete_user', {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ login: userData })  // Отправляем логин как JSON
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Пользователь удален:', data);
-        // Дополнительная логика для обновления UI
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-    });
+
+    if (!response.ok) {
+        throw new Error('Ошибка при удалении пользователя');
+    }
+    else{
+        alert("Пользователь успешно удален!");
+    }
     
-    /*try {
-        const response = await fetch(`http://localhost:3000/delete_user`, {
-            method: 'DELETE',
-            
-            body: JSON.stringify(login),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            alert('Пользователь удален');
-            $('#userModal').modal('hide');  // Закрываем модальное окно
-
-            // Обновляем список пользователей
-            loadUsers();  // Перезагружаем список пользователей
-        } else {
-            alert('Ошибка удаления пользователя');
-        }
-    } catch (err) {
-        console.error('Ошибка:', err);
-        alert('Ошибка при удалении пользователя');
-    }*/
 });

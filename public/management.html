@@ -72,54 +72,71 @@
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Добавить пользователя</button>
 
     <!-- Модальное окно для добавления пользователя -->
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addUserModalLabel">Добавление пользователя</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="addUserForm">
-                        <div class="form-group">
-                            <label for="user-name">Имя</label>
-                            <input type="text" class="form-control" id="user-name" placeholder="Имя">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-surname">Фамилия</label>
-                            <input type="text" class="form-control" id="user-surname" placeholder="Фамилия">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-gender">Пол</label>
-                            <input type="text" class="form-control" id="user-gender" placeholder="Пол">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-login">Логин</label>
-                            <input type="text" class="form-control" id="user-login" placeholder="Логин">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-password">Пароль</label>
-                            <input type="text" class="form-control" id="user-password" placeholder="Пароль">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-phone">Телефон</label>
-                            <input type="text" class="form-control" id="user-phone" placeholder="Телефон">
-                        </div>
-                        <div class="form-group">
-                            <label for="user-dob">Дата рождения</label>
-                            <input type="date" class="form-control" id="user-dob">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-primary" id="save-user-btn">Сохранить</a>
-                </div>
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Добавление пользователя</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="form-group">
+                        <label for="user-name">Имя</label>
+                        <input type="text" class="form-control" id="user-name" placeholder="Имя">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-surname">Фамилия</label>
+                        <input type="text" class="form-control" id="user-surname" placeholder="Фамилия">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-gender">Пол</label>
+                        <select class="form-control" id="user-gender">
+                            <option value="М">М</option>
+                            <option value="Ж">Ж</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role">Роль</label>
+                        <select class="form-control" id="user-role">
+                            <option value="Администратор">Администратор</option>
+                            <option value="Пользователь">Пользователь</option>
+                            <option value="Студент">Студент</option>
+                            <option value="Преподаватель">Преподаватель</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-login">Логин</label>
+                        <input type="text" class="form-control" id="user-login" placeholder="Логин">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-password">Пароль</label>
+                        <input type="text" class="form-control" id="user-password" placeholder="Пароль">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-phone">Телефон</label>
+                        <input type="text" class="form-control" id="user-phone" placeholder="Телефон">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-dob">Дата рождения</label>
+                        <input type="date" class="form-control" id="user-dob" max="">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="save-user-btn">Сохранить</button>
             </div>
         </div>
     </div>
+</div>
+
+<script>
+    // Устанавливаем максимальную дату для поля даты рождения
+    document.getElementById('user-dob').max = new Date().toISOString().split("T")[0];
+</script>
 
     <!-- Модальное окно для отображения подробной информации -->
     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
