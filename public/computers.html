@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список компьютеров</title>
+    <!-- Подключаем Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Подключаем внешний CSS файл -->
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+    <script>
+        // Загружаем общий header
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.body.insertAdjacentHTML('afterbegin', data); // Вставляем шапку в начало body
+                })
+                .catch(err => console.error('Ошибка загрузки шапки:', err));
+        });
+    </script>
+
+    <div class="container mt-5">
+        <div class="row" id="computers-container">
+            <!-- Карточки с компьютерами будут вставляться сюда через JavaScript -->
+        </div>
+    </div>
+
+    <!-- Модальное окно для отображения подробной информации -->
+    <div class="modal fade" id="computerModal" tabindex="-1" aria-labelledby="computerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="computerModalLabel">Информация о компьютере</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ID:</strong> <span id="computer-id"></span></p>
+                    <p><strong>Имя компьютера:</strong> <span id="computer-name"></span></p>
+                    <p><strong>MAC-адрес:</strong> <span id="mac-address"></span></p>
+                    <p><strong>Материнская плата:</strong> <span id="motherboard"></span></p>
+                    <p><strong>Видеокарта:</strong> <span id="gpu"></span></p>
+
+                    <p><strong>Установленное ПО:</strong></p>
+                    <ul id="software-list"></ul>
+
+                    <!-- Выпадающий список для выбора ПО -->
+                    <div class="form-group">
+                        <label for="softwareSelect">Выберите ПО:</label>
+                        <select class="form-control" id="softwareSelect"></select>
+                    </div>
+
+                    <!-- Кнопка для установки ПО -->
+                    <button class="btn btn-primary" id="installSoftwareButton">Установить ПО</button>
+
+                    <!-- Кнопка для удаления ПО -->
+                    <button class="btn btn-danger mt-2" id="removeSoftwareButton">Удалить ПО</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем необходимые скрипты Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="./computers.js"></script>
+
+    <script>
+        
+        
+        document.getElementById('removeSoftwareButton').addEventListener('click', function() {
+            const PK_Computer = document.getElementById('computer-id').textContent; // ID компьютера
+            const PK_Software = document.getElementById('softwareSelect').value; // ID выбранного ПО
+
+            if (!PK_Software) {
+                alert('Выберите ПО для удаления');
+                return;
+            }
+
+            fetch('/api/remove-software', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ PK_Computer, PK_Software })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('ПО удалено успешно');
+                    // Обновить список ПО в модальном окне или выполнить другие действия
+                } else {
+                    response.text().then(msg => alert('Ошибка: ' + msg));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                //alert('Ошибка при удалении ПО');
+            });
+        });
+        
+    </script>
+
+</body>
+</html>

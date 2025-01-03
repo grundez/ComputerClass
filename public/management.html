@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+    <script>
+        // Загружаем общий header
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.body.insertAdjacentHTML('afterbegin', data); // Вставляем шапку в начало body
+                })
+                .catch(err => console.error('Ошибка загрузки шапки:', err));
+        });
+    </script>
+
+    <!-- Форма для фильтров -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="filters-container">
+                    <h4 class="filters-title">Фильтры</h4>
+                    <div class="filter-group">
+                        <label for="filter-name">Имя</label>
+                        <input type="text" id="filter-name" class="form-control filter-input" placeholder="Фильтр по имени">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-surname">Фамилия</label>
+                        <input type="text" id="filter-surname" class="form-control filter-input" placeholder="Фильтр по фамилии">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-login">Логин</label>
+                        <input type="text" id="filter-login" class="form-control filter-input" placeholder="Фильтр по логину">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-phone">
+                            <i class="fas fa-phone-alt"></i> Телефон
+                        </label>
+                        <input type="text" id="filter-phone" class="form-control filter-input" placeholder="Фильтр по телефону">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button id="reset-btn" class="btn btn-secondary mt-3">Сбросить</button>
+                        </div>
+                    </div>
+                </div>
+
+    
+
+                <div id="users-container" class="row">
+                    <!-- Карточки пользователей будут вставляться сюда через JS -->
+                </div>
+                <nav>
+                    <ul id="pagination-container" class="pagination justify-content-center mt-4">
+                        <!-- Кнопки пагинации будут динамически добавляться через JS -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Кнопка для добавления пользователя -->
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Добавить пользователя</button>
+
+    <!-- Модальное окно для добавления пользователя -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">Добавление пользователя</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label for="user-name">Имя</label>
+                            <input type="text" class="form-control" id="user-name" placeholder="Имя">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-surname">Фамилия</label>
+                            <input type="text" class="form-control" id="user-surname" placeholder="Фамилия">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-gender">Пол</label>
+                            <input type="text" class="form-control" id="user-gender" placeholder="Пол">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-login">Логин</label>
+                            <input type="text" class="form-control" id="user-login" placeholder="Логин">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-password">Пароль</label>
+                            <input type="text" class="form-control" id="user-password" placeholder="Пароль">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-phone">Телефон</label>
+                            <input type="text" class="form-control" id="user-phone" placeholder="Телефон">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-dob">Дата рождения</label>
+                            <input type="date" class="form-control" id="user-dob">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="save-user-btn">Сохранить</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для отображения подробной информации -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel">Информация о пользователе</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Подробности о пользователе будут вставляться сюда -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="delete-user-btn">Удалить пользователя</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="management.js"></script>
+</body>
+</html>

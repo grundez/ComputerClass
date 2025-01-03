@@ -1,0 +1,229 @@
+/* Дополнительные стили */
+.computer-card {
+    cursor: pointer;
+    transition: transform 0.3s;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.computer-card:hover {
+    transform: scale(1.05);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+/* Мигающий зеленый статус */
+.online {
+    background-color: green;
+    animation: blink 1s infinite;
+}
+
+/* Статический красный статус */
+.offline {
+    background-color: red;
+}
+
+/* Анимация мигания */
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Стили для отображения компьютеров в сетке */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.col-md-4 {
+    width: 32%; /* Устанавливаем три колонки */
+    box-sizing: border-box;
+}
+
+/* Цвет текста в зависимости от статуса */
+.status-online {
+    color: green;
+}
+
+.status-offline {
+    color: red;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body p {
+    margin: 5px 0;
+}
+
+
+/* Стили для отображения компьютеров в сетке */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.col-md-4 {
+    flex: 1 0 32%; /* Каждая карточка будет занимать 32% ширины (3 колонки) */
+    box-sizing: border-box;
+}
+
+/* Чтобы карточки занимали 100% ширины на маленьких экранах */
+@media (max-width: 768px) {
+    .col-md-4 {
+        width: 100%; /* На малых экранах карточки будут занимать всю ширину */
+    }
+}
+
+@media (min-width: 768px) {
+    .col-md-4 {
+        width: 32%; /* На больших экранах карточки будут делиться на три столбца */
+    }
+}
+
+.navbar-nav.ms-auto {
+    margin-left: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+.navbar-nav .nav-item:last-child {
+    margin-left: auto;  
+}
+
+/* Статус "в ремонте" */
+.repairing {
+    color: orange; /* Оранжевая надпись */
+}
+
+.status-repairing {
+    background-color: orange; /* Оранжевый круглый индикатор */
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+}
+
+
+body {
+    padding-top: 70px; 
+}
+
+
+.navbar-nav.ms-auto {
+    margin-left: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.filters-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+.filters-container:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
+}
+
+.filters-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #343a40;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.filter-group label {
+    font-size: 1rem;
+    color: #495057;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.filter-input {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    width: 100%;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.filter-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.filter-group input[type="date"] {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.filter-group input[type="text"], .filter-group input[type="date"] {
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.filter-group input[type="text"]:hover, .filter-group input[type="date"]:hover {
+    background-color: #f1f3f5;
+}
+
+#dob-range {
+    display: none;
+}
+
+.filter-group input[type="date"] {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.filter-group select {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.card.user-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
+}
+
+
+.card.user-card:hover {
+    transform: scale(1.05); 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+}

@@ -1,0 +1,85 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Главная страница</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Подключаем Bootstrap Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <script>
+    // Загружаем общий header
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.body.insertAdjacentHTML('afterbegin', data); // Вставляем шапку в начало body
+            })
+            .catch(err => console.error('Ошибка загрузки шапки:', err));
+    });
+  </script>
+
+  <div class="container my-5">
+    <div class="row">
+      <!-- Карточка Компьютеры -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <!-- Заменили изображение на иконку -->
+          <div class="card-img-top text-center py-4">
+            <i class="bi bi-laptop" style="font-size: 100px;"></i>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">
+              Компьютеры
+            </h5>
+            <p class="card-text">Просмотр всех компьютеров в базе данных.</p>
+            <a href="/computers" class="btn btn-primary">Перейти</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Карточка Отчеты -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <!-- Заменили изображение на иконку -->
+          <div class="card-img-top text-center py-4">
+            <i class="bi bi-file-earmark-bar-graph" style="font-size: 100px;"></i>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">
+               Отчеты
+            </h5>
+            <p class="card-text">Просмотр и генерация отчетов по данным.</p>
+            <a href="/report" class="btn btn-primary">Перейти</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Карточка Личный кабинет -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <!-- Заменили изображение на иконку -->
+          <div class="card-img-top text-center py-4">
+            <i class="bi bi-person-circle" style="font-size: 100px;"></i>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">
+               Личный кабинет
+            </h5>
+            <p class="card-text">Перейти в личный кабинет для управления настройками.</p>
+            <a href="/account" class="btn btn-primary">Перейти</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
