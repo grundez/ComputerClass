@@ -129,9 +129,9 @@ app.get('/api/most_active_computer', async (req, res) => {
 
 
 app.post('/api/install-software', async (req, res) => {
-    console.log('Запрос получен на /api/install-software');
+    //console.log('Запрос получен на /api/install-software');
     const { PK_Computer, PK_Software, Actual_version, Download_date } = req.body;
-    console.log('Полученные данные:', req.body);
+    //console.log('Полученные данные:', req.body);
 
     const insertQuery = `
         INSERT INTO "Computer_Software" ("PK_Computer", "Actual_version", "Download_date", "PK_Software")
@@ -140,16 +140,16 @@ app.post('/api/install-software', async (req, res) => {
     `;
 
     try {
-        console.log('Создаю запрос');
+        //console.log('Создаю запрос');
         const result = await db.query(insertQuery, [PK_Computer, Actual_version, Download_date, PK_Software]);
 
-        console.log('Результат запроса:', result);
+        //console.log('Результат запроса:', result);
 
         if (result.rowCount === 0) {
             console.log('Запись уже существует');
             return res.status(409).send('Запись уже существует');
         } else {
-            console.log('Запись добавлена успешно');
+            //console.log('Запись добавлена успешно');
             return res.status(200).send('ПО установлено успешно');
         }
     } catch (err) {
@@ -201,16 +201,16 @@ app.delete('/api/remove-software', async (req, res) => {
     `;
     
     try {
-        console.log('Перед запросом к базе данных для удаления');
+        //console.log('Перед запросом к базе данных для удаления');
         const result = await db.query(query, [PK_Computer, PK_Software]);
-        console.log('Результат удаления:', result);
+        //console.log('Результат удаления:', result);
 
         if (result.rowCount === 0) {
             console.log('Запись не найдена для удаления');
             return res.status(404).send('ПО не найдено для удаления');
         }
 
-        console.log('ПО успешно удалено');
+        //console.log('ПО успешно удалено');
         return res.status(200).send('ПО удалено успешно');
     } catch (err) {
         console.error('Ошибка при удалении ПО:', err);
@@ -218,6 +218,77 @@ app.delete('/api/remove-software', async (req, res) => {
     }
 });
 
+
+app.get('/api/computers/:computerId/logs', async (req, res) => {
+    const { computerId } = req.params;
+    //console.log('Запрос на получение логов для компьютера:', computerId);
+
+    const selectQuery = `
+        SELECT l."Action", l."Action_date", l."Action_time", l."IP_address"
+        FROM "Logs" l
+        WHERE l."PK_Computer" = $1
+        ORDER BY l."Action_date" DESC, l."Action_time" DESC
+        LIMIT 5;
+    `;
+
+    try {
+        const result = await db.query(selectQuery, [computerId]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).send('Логи не найдены для этого компьютера');
+        }
+
+        const logsList = result.rows.map(row => ({
+            Action: row.Action,
+            Action_date: row.Action_date,
+            Action_time: row.Action_time,
+            IP_address: row.IP_address
+        }));
+
+        //console.log('Найденные логи:', logsList);
+        return res.status(200).json(logsList);
+    } catch (err) {
+        console.error('Ошибка при получении логов:', err);
+        return res.status(500).send('Ошибка базы данных');
+    }
+});
+
+app.get('/api/users/:userId/logs', async (req, res) => {
+    const { userId } = req.params;
+
+    const logsQuery = `
+        SELECT l."Action", l."Action_date", l."Action_time", l."IP_address", c."Domain_name"
+        FROM "Logs" l
+        JOIN "Computer" c ON l."PK_Computer" = c."PK_Computer"
+        WHERE l."PK_Computer" IN (
+            SELECT "PK_Computer" FROM "Account_Computer" WHERE "PK_Account" = (
+                SELECT "PK_Account" FROM "Account" WHERE "PK_User" = $1
+            )
+        )
+        ORDER BY l."Action_date" DESC, l."Action_time" DESC
+        LIMIT 5
+    `;
+
+    try {
+        const logsResult = await db.query(logsQuery, [userId]);
+
+        if (logsResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Логи не найдены для этого пользователя' });
+        }
+
+        const logsList = logsResult.rows.map(row => ({
+            Action: row.Action,
+            Action_date: row.Action_date,
+            Action_time: row.Action_time,
+            IP_address: row.IP_address,
+            Domain_name: row.Domain_name
+        }));
+        return res.status(200).json(logsList);
+    } catch (err) {
+        console.error('Ошибка при получении логов:', err);
+        return res.status(500).json({ message: 'Ошибка базы данных' });
+    }
+});
 
 
 // Маршрут для получения списка ролей (без защиты)
@@ -377,7 +448,7 @@ app.get('/api/account', async (req, res) => {
 
         // Получение активности пользователя
         const activityResult = await db.query(
-            `SELECT ac."Session_time", c."Domain_name" 
+            `SELECT ac."Session_time", c."Domain_name"
              FROM "Account_Computer" ac 
              JOIN "Computer" c ON ac."PK_Computer" = c."PK_Computer"
              WHERE ac."PK_Account" = (
@@ -412,7 +483,6 @@ app.get('/api/account', async (req, res) => {
              LIMIT 5`,
             [userId]
         );
-        console.log(roleResult.rows[0].Name);
         res.json({
             user: userResult.rows[0],
             role: roleResult.rows[0].Name,
@@ -515,10 +585,8 @@ app.get('/logout', (req, res) => {
 });
 
 app.post('/add_user', async (req, res) => {
-    const { name, surname, gender, login, password, phone, dob } = req.body;
-    console.log("Хэшируем пароль:", password);
+    const { name, surname, gender, role, login, password, phone, dob } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("Хэш пароля перед сохранением:", hashedPassword);
     try {
         if (!name || !surname || !login || !phone || !dob || !gender || !password) {
             return res.status(400).json({ success: false, message: 'Все поля обязательны для заполнения.' });
@@ -537,7 +605,7 @@ app.post('/add_user', async (req, res) => {
 
         // Вставка данных в таблицу Account
         const accountResult = await db.query(
-            'INSERT INTO "Account" ("Login", "Password", "PK_User") VALUES ($1, $2, $3)',
+            'INSERT INTO "Account" ("Login", "Password", "PK_User") VALUES ($1, $2, $3) RETURNING "PK_Account"',
             [login, hashedPassword, userId]
         );
 
@@ -581,6 +649,7 @@ app.delete('/delete_user', (req, res) => {
 
     // Транзакция для удаления аккаунта и пользователя
     const deleteQueryAccountRole = 'DELETE FROM "Account_Role" WHERE "PK_Account" = (SELECT "PK_Account" FROM "Account" WHERE "Login" = $1)';
+    const deleteQueryAccountComputer = 'DELETE FROM "Account_Computer" WHERE "PK_Account" = (SELECT "PK_Account" FROM "Account" WHERE "Login" = $1)';
     const deleteQueryAccount = 'DELETE FROM "Account" WHERE "Login" = $1 RETURNING "PK_User"';
     const deleteQueryUser = 'DELETE FROM "User" WHERE "PK_User" = $1';
 
@@ -589,6 +658,10 @@ app.delete('/delete_user', (req, res) => {
         .then(() => {
             // Удаляем все записи в Account_Role, которые ссылаются на аккаунт
             return db.query(deleteQueryAccountRole, [login]);
+        })
+        .then(() => {
+            // Удаляем все записи в Account_Computer, которые ссылаются на аккаунт
+            return db.query(deleteQueryAccountComputer, [login]);
         })
         .then(() => {
             // Затем удаляем аккаунт и получаем PK_User

@@ -71,9 +71,41 @@
     <!-- Кнопка для добавления пользователя -->
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Добавить пользователя</button>
 
+    <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-logs">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logsModalLabel">Логи пользователя</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body-logs">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Время</th>
+                                <th>Действие</th>
+                                <th>IP-адрес</th>
+                                <th>Компьютер</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table">
+                            <!-- Логи пользователя будут загружены сюда -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Модальное окно для добавления пользователя -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog ">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addUserModalLabel">Добавление пользователя</h5>
@@ -154,6 +186,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="delete-user-btn">Удалить пользователя</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-info" id="show-logs-btn">Показать логи</button>
                 </div>
             </div>
         </div>

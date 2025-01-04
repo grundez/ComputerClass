@@ -25,78 +25,50 @@
     });
   </script>
 
-  <div class="container my-5">
+<div class="container my-5">
 
-    <!-- Круговая диаграмма статусов компьютеров -->
-    <div class="row">
-      <div class="col-md-12" id="chartContainer" style="display: none;">
-        <h3>Статусы компьютеров</h3>
-        <canvas id="computerStatusChart" width="350" height="350"></canvas> <!-- Уменьшенный размер -->
-      </div>
-    </div>
+  <!-- Таблица отчетов -->
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th>Название отчета</th>
+        <th>Дата создания</th>
+        <th>Действие</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Диаграмма состояния компьютеров</td>
+        <td>04.01.2024</td>
+        <td>
+          <button id="toggleChart" class="btn btn-info btn-sm">
+            <i class="bi bi-bar-chart-line"></i> Диаграмма
+          </button>
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Самый активный компьютер</td>
+        <td>04.01.2024</td>
+        <td>
+          <button id="loadMostActiveComputerBtn" class="btn btn-info btn-sm">
+            <i class="bi bi-bar-chart-line"></i> Диаграмма
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-    <!-- Таблица отчетов -->
-    <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>№</th>
-          <th>Название отчета</th>
-          <th>Дата создания</th>
-          <th>Действие</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>Диаграмма состояния компьютеров</td>
-          <td>04.01.2024</td>
-          <td>
-            <button id="toggleChart" class="btn btn-info btn-sm">
-              <i class="bi bi-bar-chart-line"></i> Диаграмма
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>Самый активный компьютер</td>
-          <td>13.12.2024</td>
-          <td>
-            <button id="loadMostActiveComputerBtn" class="btn btn-info btn-sm">
-              <i class="bi bi-bar-chart-line"></i> Диаграмма
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Диаграмма самого активного компьютера -->
-    <div class="row mt-3">
-      <div class="col-md-12">
-        <h3>Самый активный компьютер</h3>
-        <canvas id="mostActiveComputerChart" width="350" height="350"></canvas> <!-- Уменьшенный размер -->
-      </div>
-    </div>
-
+  <!-- Контейнер для отчетов -->
+  <div id="reportsContainer">
+    <!-- Сюда будут добавляться отчеты -->
   </div>
 
-  <script>
-    // Функция для отображения/скрытия диаграммы состояния компьютеров
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('#toggleChart')) {
-            const chartContainer = document.getElementById('chartContainer');
-            if (chartContainer.style.display === 'none') {
-                chartContainer.style.display = 'block';
-            } else {
-                chartContainer.style.display = 'none';
-            }
-            const dateCell = document.querySelector('table tbody tr td:nth-child(3)');
-            if (dateCell) {
-                const currentDate = new Date().toLocaleDateString('ru-RU');
-                dateCell.textContent = currentDate;
-            }
-        }
-    });
+</div>
 
+  <script>
     // Загружаем данные о компьютерах и создаем диаграмму статусов
     async function loadComputers() {
         try {
@@ -158,7 +130,16 @@
             const data = await response.json();
 
             const labels = data.map(item => item.Domain_name);
-            const sessionTimes = data.map(item => item.TotalSessionTime);
+
+            // Преобразуем время в часы и минуты
+            const sessionTimes = data.map(item => {
+                const totalMinutes = item.TotalSessionTime * 60; // Суммарное время в минутах
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = Math.round(totalMinutes % 60);
+                return `${hours}ч ${minutes}мин`;
+            });
+
+            const rawSessionTimes = data.map(item => item.TotalSessionTime); // Для отображения точных значений в подсказках
 
             const ctx = document.getElementById('mostActiveComputerChart').getContext('2d');
             new Chart(ctx, {
@@ -166,8 +147,8 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Суммарное время сессий (часы)',
-                        data: sessionTimes,
+                        label: 'Суммарное время сессий',
+                        data: rawSessionTimes,
                         backgroundColor: '#007bff',
                         borderColor: '#fff',
                         borderWidth: 1
@@ -181,8 +162,12 @@
                         },
                         tooltip: {
                             callbacks: {
+                                // Форматируем отображение времени в подсказке
                                 label: function(tooltipItem) {
-                                    return `${tooltipItem.label}: ${tooltipItem.raw.toFixed(2)} часов`;
+                                    const totalMinutes = rawSessionTimes[tooltipItem.dataIndex] * 60; // Суммарное время в минутах
+                                    const hours = Math.floor(totalMinutes / 60);
+                                    const minutes = Math.round(totalMinutes % 60);
+                                    return `${tooltipItem.label}: ${hours}ч ${minutes}мин`;
                                 }
                             }
                         }
@@ -209,6 +194,8 @@
         }
     }
 
+
+
     // Добавляем обработчик для кнопки загрузки диаграммы самых активных компьютеров
     document.getElementById('loadMostActiveComputerBtn').addEventListener('click', loadMostActiveComputers);
   </script>
@@ -216,6 +203,83 @@
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Переменные для отслеживания состояния диаграмм
+    const reportsContainer = document.getElementById('reportsContainer');
+    const reportStates = {
+      chartContainer: false, // Состояние для диаграммы "Статусы компьютеров"
+      mostActiveChartContainer: false // Состояние для диаграммы "Самый активный компьютер"
+    };
+  
+    // Универсальная функция управления диаграммами
+    function toggleReport(reportId, createCallback) {
+      // Проверяем, существует ли диаграмма в DOM
+      let reportDiv = document.getElementById(reportId);
+  
+      if (reportStates[reportId]) {
+        // Если диаграмма уже отображена, скрываем её
+        reportDiv.style.display = 'none';
+        reportStates[reportId] = false; // Обновляем состояние диаграммы
+        // Удаляем старую диаграмму, чтобы анимация срабатывала при каждом открытии
+        const existingDiv = document.getElementById(reportId);
+        if (existingDiv) {
+          existingDiv.remove();
+          reportStates[reportId] = false; // Сброс состояния
+        }
+        
+      } else {
+        // Если диаграммы ещё нет, создаём её через callback
+        if (!reportDiv) {
+          reportDiv = createCallback();
+          reportDiv.id = reportId;
+          reportDiv.classList.add('mt-3');
+          reportsContainer.appendChild(reportDiv);
+        }
+  
+        // Показываем диаграмму
+        reportDiv.style.display = 'block';
+        reportStates[reportId] = true; // Обновляем состояние диаграммы
+  
+        // Скрываем все другие диаграммы и сбрасываем их состояние
+        Object.keys(reportStates).forEach(id => {
+          if (id !== reportId) {
+            const div = document.getElementById(id);
+            if (div) div.style.display = 'none';
+            reportStates[id] = false; // Сброс состояния других диаграмм
+            const existingDiv = document.getElementById(id);
+            if (existingDiv) {
+              existingDiv.remove();
+              reportStates[id] = false; // Сброс состояния
+            }
+          }
+        });
+      }
+    }
+  
+    // Обработчик для кнопки диаграммы "Статусы компьютеров"
+    document.getElementById('toggleChart').addEventListener('click', () => {
+      toggleReport('chartContainer', () => {
+        const chartDiv = document.createElement('div');
+        chartDiv.innerHTML = 
+          `<h3>Статусы компьютеров</h3>
+          <canvas id="computerStatusChart" width="350" height="350"></canvas>`;
+        loadComputers(); // Загружаем данные для диаграммы сразу после её создания
+        return chartDiv;
+      });
+    });
+  
+    // Обработчик для кнопки диаграммы "Самый активный компьютер"
+    document.getElementById('loadMostActiveComputerBtn').addEventListener('click', () => {
+      toggleReport('mostActiveChartContainer', () => {
+        const activeChartDiv = document.createElement('div');
+        activeChartDiv.innerHTML = 
+          `<h3>Самый активный компьютер</h3>
+          <canvas id="mostActiveComputerChart" width="350" height="350"></canvas>`;
+        loadMostActiveComputers(); // Загружаем данные для диаграммы сразу после её создания
+        return activeChartDiv;
+      });
+    });
+  </script>
 
 </body>
 </html>

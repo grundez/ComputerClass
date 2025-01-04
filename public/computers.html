@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список компьютеров</title>
     <!-- Подключаем Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <!-- Подключаем внешний CSS файл -->
     <link href="style.css" rel="stylesheet">
 </head>
@@ -29,7 +31,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для отображения подробной информации -->
+    <!-- Модальное окно для отображения подробной информации о компьютере -->
     <div class="modal fade" id="computerModal" tabindex="-1" aria-labelledby="computerModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -60,10 +62,49 @@
 
                     <!-- Кнопка для удаления ПО -->
                     <button class="btn btn-danger mt-2" id="removeSoftwareButton">Удалить ПО</button>
+
+                    <!-- Кнопка для просмотра логов -->
+                    <button class="btn btn-info mt-2" id="viewLogsButton" data-toggle="modal" data-target="#logsModal">Посмотреть логи</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Модальное окно для отображения логов -->
+    <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-logs">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logsModalLabel">Логи компьютера</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body-logs"> <!-- Специфический класс для тела окна логов -->
+                    <!-- Таблица для логов (будет занимать весь доступный размер) -->
+                    <table class="table table-striped" style="width: 100%; table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Время</th>
+                                <th>IP-адрес</th>
+                                <th>Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-list">
+                            <!-- Логи будут добавлены сюда с помощью JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    
+
 
     <!-- Подключаем необходимые скрипты Bootstrap -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

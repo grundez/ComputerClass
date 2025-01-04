@@ -63,22 +63,53 @@ async function loadComputers() {
             container.appendChild(card);
         });
 
-        // Обработчик для модального окна
-        $('#computerModal').on('show.bs.modal', function (event) {
+        // Обработчик для кнопки "Посмотреть логи"
+        $('#viewLogsButton').on('click', async function () {
+            const computerId = $('#computer-id').text(); // Получаем ID компьютера из модального окна
+
+            // Загружаем логи для этого компьютера
+            const logs = await fetchLogs(computerId);
+            
+            // Преобразуем логи в строки таблицы
+            const logsList = logs.map(log => `
+                <tr>
+                    <td>${log.Action_date}</td>
+                    <td>${log.Action_time}</td>
+                    <td>${log.IP_address}</td>
+                    <td>${log.Action}</td>
+                </tr>
+            `).join('');
+
+            // Открываем модальное окно с логами
+            $('#logsModal').modal('show');
+            
+            // Добавляем данные о логах в модальное окно
+            $('#logsModal').find('#logs-list').html(logsList);
+        });
+
+        // Функция для получения логов с сервера
+        async function fetchLogs(computerId) {
+            try {
+                const response = await fetch(`/api/computers/${computerId}/logs`);
+                if (!response.ok) {
+                    throw new Error('Не удалось получить логи');
+                }
+                const logs = await response.json();
+                return logs;
+            } catch (error) {
+                console.error('Ошибка при получении логов:', error);
+                return []; // Возвращаем пустой массив в случае ошибки
+            }
+        }
+
+
+        // Обработчик для модального окна с информацией о ПО
+        $('#computerModal').on('show.bs.modal', async function (event) {
             const button = $(event.relatedTarget); // Кнопка, которая открывает модальное окно
             const computer = button.data('computer'); // Данные о компьютере
-        
+            
             // Загружаем установленное ПО
-            const softwareLinks = softwareLinkData.filter(link => link.PK_Computer === computer.PK_Computer);
-            const installedSoftware = softwareLinks.map(link => {
-                const software = softwareData.find(software => software.PK_Software === link.PK_Software);
-                return software ? software.Name : null;
-            }).filter(softwareName => softwareName !== null);
-        
-            const softwareList = installedSoftware.map(software => `<li>${software}</li>`).join('');
-        
-            // Обновляем список ПО в модальном окне
-            updateSoftwareList(computer.PK_Computer);
+            await updateSoftwareList(computer.PK_Computer);
 
             const modal = $(this);
             modal.find('#computer-id').text(computer.PK_Computer);
@@ -86,10 +117,6 @@ async function loadComputers() {
             modal.find('#mac-address').text(computer.MAC_address);
             modal.find('#motherboard').text(computer.Motherboard);
             modal.find('#gpu').text(computer.GPU);
-            modal.find('#software-list').html(softwareList);
-        
-            
-
         });
         
 
@@ -130,14 +157,24 @@ window.onload = function() {
 
 async function updateSoftwareList(computerId) {
     try {
-        // Запросим обновленный список ПО для конкретного компьютера
         const response = await fetch(`/api/computers/${computerId}/software`);
-        const softwareData = await response.json(); // Получаем данные ПО
+
+        // Если сервер возвращает 404, обрабатываем как частный случай
+        if (response.status === 404) {
+            const softwareListElement = document.getElementById('software-list');
+            softwareListElement.innerHTML = '<li>ПО для этого компьютера не установлено</li>';
+            return; // Прерываем выполнение функции
+        }
+
+        if (!response.ok) {
+            throw new Error(`Ошибка сети: ${response.statusText}`);
+        }
+        const softwareData = await response.json();
 
         const softwareListElement = document.getElementById('software-list');
-        softwareListElement.innerHTML = ''; // Очищаем список
+        softwareListElement.innerHTML = ''; // Очищаем содержимое списка
 
-        if (softwareData.length === 0) {
+        if (!softwareData || softwareData.length === 0) {
             softwareListElement.innerHTML = '<li>Нет установленного ПО</li>';
             return;
         }
@@ -147,10 +184,19 @@ async function updateSoftwareList(computerId) {
             listItem.textContent = `${software.Name} (версия: ${software.Actual_version})`;
             softwareListElement.appendChild(listItem);
         });
+
+        console.log('Список ПО успешно обновлен:', softwareData);
+
     } catch (error) {
         console.error('Ошибка при обновлении списка ПО:', error);
+        alert(`Ошибка: ${error.message}`);
     }
 }
+
+
+
+
+
 
 
 

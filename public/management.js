@@ -1,5 +1,5 @@
 let currentPage = 1; // Текущая страница
-const usersPerPage = 5; // Количество пользователей на одной странице
+const usersPerPage = 6; // Количество пользователей на одной странице
 let allUsers = []; // Все пользователи
 
 
@@ -29,7 +29,7 @@ function displayUsers() {
         const phoneText = user.Phone || 'Не указан';
 
         const card = document.createElement('div');
-        card.classList.add('col-md-4', 'mb-4');
+        card.classList.add('col-md-4');
         card.innerHTML = `
             <div class="card user-card" data-toggle="modal" data-target="#userModal" data-user='${JSON.stringify(user).replace(/'/g, "&quot;")}'>
                 <div class="card-body">
@@ -62,9 +62,63 @@ function displayUsers() {
             <p><strong>Дата рождения:</strong> ${formattedDate}</p>
         `);
         modal.find('#delete-user-btn').data('login', user.Login);
+        modal.find('#show-logs-btn').click(function() {
+            // Открыть модальное окно с логами
+            $('#logsModal').modal('show');
+            loadUserLogs(user.PK_User);
+        });
+        //loadUserLogs(user.PK_User);
     });
 
     updatePaginationButtons();
+}
+
+async function loadUserLogs(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}/logs`);
+        const data = await response.json();
+
+        // Проверка, что данные не пусты
+        if (!data || data.length === 0) {
+            console.error('Логи не найдены или неправильный формат данных');
+            showLogsError('Ошибка загрузки логов: данные не найдены.');
+            return;
+        }
+
+        const logsTable = document.getElementById('logs-table');
+        logsTable.innerHTML = ''; // Очищаем таблицу перед загрузкой новых данных
+
+        const logs = data;
+
+        if (logs.length > 0) {
+            logs.forEach(log => {
+                const logRow = document.createElement('tr');
+
+                const dateObj = new Date(log.Action_date);
+                const formattedDate = !isNaN(dateObj) ? dateObj.toLocaleDateString('ru-RU') : log.Action_date;
+
+                const timeObj = new Date(`1970-01-01T${log.Action_time}Z`);
+                const formattedTime = !isNaN(timeObj) ? timeObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : log.Action_time;
+
+                logRow.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${formattedTime}</td>
+                    <td>${log.Action}</td>
+                    <td>${log.IP_address}</td>
+                    <td>${log.Domain_name}</td>
+                `;
+                logsTable.appendChild(logRow);
+            });
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке логов пользователя:', error);
+        showLogsError('Ошибка загрузки логов.');
+    }
+}
+
+function showLogsError(message) {
+    const logsModalBody = document.querySelector('#logsModal .modal-body');
+    logsModalBody.innerHTML = `<div class="alert alert-danger">${message}</div>`;
 }
 
 function updatePaginationButtons() {
@@ -201,12 +255,9 @@ document.getElementById("save-user-btn").addEventListener("click", async () => {
             throw new Error('Ошибка при добавлении пользователя');
         }
         else{
-            console.log(password);
             alert("Пользователь успешно добавлен!");
+            loadUsers();
         }
-
-        const data = await response.json();
-        console.log('Пользователь добавлен:', data);
     } catch (error) {
         console.error('Ошибка:', error);
     }
@@ -234,6 +285,6 @@ document.getElementById('delete-user-btn').addEventListener('click', async () =>
     }
     else{
         alert("Пользователь успешно удален!");
+        loadUsers();
     }
-    
 });

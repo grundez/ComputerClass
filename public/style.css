@@ -50,11 +50,17 @@
 .row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 22px; 
+    justify-content: flex-start;
 }
 
-.col-md-4 {
+/*.col-md-4 {
     width: 32%; /* Устанавливаем три колонки */
+    /*box-sizing: border-box;
+}*/
+.col-md-4 {
+    flex: 1 1 calc(33.33% - 20px); /* Три карточки в ряду */
+    max-width: calc(33.33% - 20px);
     box-sizing: border-box;
 }
 
@@ -227,3 +233,59 @@ body {
     transform: scale(1.05); 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
 }
+
+/* Для модальных окон с логами */
+.modal#logsModal {
+    z-index: 1050 !important; /* Устанавливаем для логов более высокий z-index */
+}
+
+/* Для модального окна с информацией о пользователе */
+.modal#userModal {
+    z-index: 1040 !important; /* Окно пользователя ниже */
+}
+
+/* Фон для модальных окон */
+.modal-backdrop {
+    z-index: 1030 !important; /* Обеспечиваем, что фон будет ниже */
+}
+
+.modal-backdrop.show {
+    opacity: 0.5; /* Сделать фон полупрозрачным */
+}
+
+/* Стили для модального окна логов */
+.modal-dialog-logs {
+    max-width: 50%; /* Максимальная ширина модального окна */
+    width: auto;
+    height: auto; /* Высота модального окна */
+    display: flex;
+    flex-direction: column;
+    margin: auto; /* Центрируем окно */
+}
+
+
+/* Стили для тела модального окна логов */
+.modal-body-logs {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Высота модального окна для таблицы */
+    padding: 0;
+}
+
+/* Стили для таблицы логов */
+.modal-body-logs .table {
+    width: 100%;
+    height: 100%; /* Таблица будет занимать всю высоту контейнера */
+    table-layout: fixed;
+    margin-bottom: 0;
+}
+
+/* Обеспечиваем, чтобы столбцы таблицы не изменяли размер */
+.modal-body-logs th, .modal-body-logs td {
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+
+
+
