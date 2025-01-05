@@ -233,6 +233,36 @@ document.getElementById("save-user-btn").addEventListener("click", async () => {
     const phone = document.getElementById("user-phone").value;
     const dob = document.getElementById("user-dob").value;
 
+    let hasError = false;
+
+    const requiredFields = [
+        { id: 'user-name', value: name },
+        { id: 'user-surname', value: surname },
+        { id: 'user-gender', value: gender },
+        { id: 'user-role', value: role },
+        { id: 'user-login', value: login },
+        { id: 'user-password', value: password },
+        { id: 'user-phone', value: phone },
+        { id: 'user-dob', value: dob }
+    ];
+
+    requiredFields.forEach(field => {
+        const inputElement = document.getElementById(field.id);
+        if (!field.value) {
+            // Если поле не заполнено, подсвечиваем его и ставим флаг ошибки
+            inputElement.classList.add('is-invalid');
+            hasError = true;
+        } else {
+            // Если поле заполнено, убираем подсветку
+            inputElement.classList.remove('is-invalid');
+        }
+    });
+
+    if (hasError) {
+        showNotification('Пожалуйста, заполните все обязательные поля.', 'danger');
+        return;
+    }
+
     // Пакуем данные в объект
     const userData = {
         name,
@@ -328,3 +358,39 @@ function createNotificationContainer() {
     document.body.appendChild(container);
     return container;
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('user-phone');
+
+    // Инициализация поля с маской
+    function formatPhone(value) {
+        let formattedValue = '';
+        value = value.replace(/\D/g, ''); // Убираем все нецифровые символы
+
+        if (value.length > 0) {
+            formattedValue += '+7 ';
+        }
+        if (value.length > 1) {
+            formattedValue += '(' + value.substring(1, 4);
+        }
+        if (value.length >= 4) {
+            formattedValue += ') ' + value.substring(4, 7);
+        }
+        if (value.length >= 7) {
+            formattedValue += '-' + value.substring(7, 9);
+        }
+        if (value.length >= 9) {
+            formattedValue += '-' + value.substring(9, 11);
+        }
+
+        return formattedValue;
+    }
+
+    // Устанавливаем начальное значение в поле
+    phoneInput.value = formatPhone(phoneInput.value || '+7 ');
+
+    // Обработчик для ввода
+    phoneInput.addEventListener('input', function(e) {
+        e.target.value = formatPhone(e.target.value);
+    });
+});

@@ -23,6 +23,33 @@
             })
             .catch(err => console.error('Ошибка загрузки шапки:', err));
     });
+
+    // Дожидаемся загрузки документа
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Функция для получения информации о текущем пользователе
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/account');
+                const data = await response.json();
+
+                // Показываем или скрываем элементы на основе роли
+                if (data.role === 'Администратор') {
+                    // Показываем вкладки "Отчеты" и "Управление" для администраторов
+                    document.getElementById('reports-link').style.display = 'block';
+                    document.getElementById('management-link').style.display = 'block';
+                } else {
+                    // Скрываем вкладки для не-администраторов
+                    document.getElementById('reports-link').style.display = 'none';
+                    document.getElementById('management-link').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки данных пользователя:', error);
+            }
+        }
+
+        // Загружаем данные пользователя
+        loadUserData();
+    });
   </script>
 
 <div class="container my-5">
@@ -303,9 +330,15 @@
     document.getElementById('toggleChart').addEventListener('click', () => {
       toggleReport('chartContainer', () => {
         const chartDiv = document.createElement('div');
-        chartDiv.innerHTML = 
-          `<h3>Статусы компьютеров</h3>
-          <canvas id="computerStatusChart" width="600" height="400"></canvas>`;
+        chartDiv.innerHTML = `
+        <h3>Статусы компьютеров</h3>
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="text-center">
+            <canvas id="computerStatusChart" width="600" height="400"></canvas>
+        </div>
+    </div>
+`;
+
         loadComputers(); // Загружаем данные для диаграммы сразу после её создания
         return chartDiv;
       });

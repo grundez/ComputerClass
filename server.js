@@ -94,10 +94,6 @@ app.get('/api/computer-software/:PK_Computer', (req, res) => {
     });
 });
 
-
-
-
-
 app.post('/api/install-software', async (req, res) => {
     //console.log('Запрос получен на /api/install-software');
     const { PK_Computer, PK_Software, Actual_version, Download_date } = req.body;
@@ -127,7 +123,6 @@ app.post('/api/install-software', async (req, res) => {
         return res.status(500).send('Ошибка базы данных');
     }
 });
-
 
 app.get('/api/computers/:id/software', async (req, res) => {
     const { id } = req.params;
@@ -411,6 +406,7 @@ app.post('/login', async (req, res) => {
 
 // Маршрут для получения личного кабинета пользователя
 app.get('/account', (req, res) => {
+
     res.sendFile(path.join(__dirname, 'public', 'account.html'));
 });
 

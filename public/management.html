@@ -20,6 +20,33 @@
                 })
                 .catch(err => console.error('Ошибка загрузки шапки:', err));
         });
+
+        // Дожидаемся загрузки документа
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Функция для получения информации о текущем пользователе
+            async function loadUserData() {
+                try {
+                    const response = await fetch('/api/account');
+                    const data = await response.json();
+
+                    // Показываем или скрываем элементы на основе роли
+                    if (data.role === 'Администратор') {
+                        // Показываем вкладки "Отчеты" и "Управление" для администраторов
+                        document.getElementById('reports-link').style.display = 'block';
+                        document.getElementById('management-link').style.display = 'block';
+                    } else {
+                        // Скрываем вкладки для не-администраторов
+                        document.getElementById('reports-link').style.display = 'none';
+                        document.getElementById('management-link').style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки данных пользователя:', error);
+                }
+            }
+
+            // Загружаем данные пользователя
+            loadUserData();
+        });
     </script>
 
     <!-- Форма для фильтров -->
