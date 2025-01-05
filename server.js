@@ -7,11 +7,16 @@ const session = require('express-session');
 const db = require('./db'); // Подключение к базе данных
 
 const app = express();
+
+app.use(session({
+    secret: 'secretkey',
+    resave: false,
+    saveUninitialized: true,
+}));
+
 app.use(express.json());
-
-
-
-
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 ////////////////////////////////////////////////////////////////////////
 app.get('/api/users', (req, res) => {
@@ -24,14 +29,6 @@ app.get('/api/users', (req, res) => {
         }
     });
 });
-
-app.use(session({
-    secret: 'secretkey',
-    resave: false,
-    saveUninitialized: true,
-}));
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Убедись, что Passport правильно настроен (сериализация/десериализация)
 passport.serializeUser((user, done) => {
@@ -54,7 +51,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Настроим статическую папку для отдачи клиентских файлов
 app.use(express.static(path.join(__dirname, 'routes')));
 
-
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html')); // Отправляем форму логина 
@@ -63,11 +59,6 @@ app.get('/', (req, res) => {
 // Маршрут для отображения компьютеров (без защиты)
 app.get('/computers', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'computers.html'));  // Отправляем файл computers.html
-});
-
-// Отчеты
-app.get('/report', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'report.html')); // Отправляем форму логина 
 });
 
 // Отчеты
@@ -104,28 +95,7 @@ app.get('/api/computer-software/:PK_Computer', (req, res) => {
 });
 
 
-app.get('/api/most_active_computer', async (req, res) => {
-    try {
-        const result = await db.query(`
-            SELECT 
-                "PK_Computer",
-                SUM(EXTRACT(EPOCH FROM "Session_time") / 3600) AS "TotalSessionTime"  -- Преобразуем время в часы
-            FROM 
-                "Account_Computer"
-            WHERE
-                "Session_date" >= CURRENT_DATE - INTERVAL '7 days'  -- Берем только за последнюю неделю
-            GROUP BY 
-                "PK_Computer"
-            ORDER BY 
-                "TotalSessionTime" DESC
-            LIMIT 1;
-        `);
-        res.json(result.rows);
-        //console.log(result.rows);
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении данных о самом активном компьютере' });
-    }
-});
+
 
 
 app.post('/api/install-software', async (req, res) => {
@@ -224,11 +194,11 @@ app.get('/api/computers/:computerId/logs', async (req, res) => {
     //console.log('Запрос на получение логов для компьютера:', computerId);
 
     const selectQuery = `
-        SELECT l."Action", l."Action_date", l."Action_time", l."IP_address"
+        SELECT l."Action", l."Action_date", l."Action_time", l."IP_address", l."Web_client"
         FROM "Logs" l
         WHERE l."PK_Computer" = $1
         ORDER BY l."Action_date" DESC, l."Action_time" DESC
-        LIMIT 5;
+        LIMIT 15;
     `;
 
     try {
@@ -242,7 +212,8 @@ app.get('/api/computers/:computerId/logs', async (req, res) => {
             Action: row.Action,
             Action_date: row.Action_date,
             Action_time: row.Action_time,
-            IP_address: row.IP_address
+            IP_address: row.IP_address,
+            Web_client: row.Web_client
         }));
 
         //console.log('Найденные логи:', logsList);
@@ -392,18 +363,38 @@ const loginUser = async (username, password) => {
   return userDetails.rows[0]; // Возвращаем информацию о пользователе без токена
 };
 
-// Маршрут для регистрации
-app.post('/register', async (req, res) => {
-    const { username, password, first_name, last_name, gender, dob, phone, role } = req.body;
+/*app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
 
     try {
-        await registerUser(username, password, first_name, last_name, gender, dob, phone);
-        res.status(201).json({ message: 'Регистрация успешна' });
+        // Проверка пользователя в базе данных
+        const result = await db.query('SELECT * FROM "Account" WHERE "Login" = $1', [username]);
+        if (result.rows.length === 0) {
+            throw new Error('Неверный логин или пароль');
+        }
+
+        const user = result.rows[0];
+        const isPasswordValid = await bcrypt.compare(password, user.Password);
+        if (!isPasswordValid) {
+            throw new Error('Неверный логин или пароль');
+        }
+
+        // Получение роли пользователя
+        const userDetails = await db.query('SELECT * FROM "User" WHERE "PK_User" = $1', [user.PK_User]);
+        const userWithRole = userDetails.rows[0];
+
+        // Сохраняем пользователя в сессии
+        req.session.user = {
+            id: userWithRole.PK_User,
+            Role: userWithRole.Role // Роль пользователя
+        };
+
+        res.json({ message: 'Успешный вход', role: userWithRole.Role });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error('Ошибка при входе:', err);
+        res.status(401).json({ error: err.message });
     }
-});
+});*/
 
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -509,26 +500,42 @@ app.post('/api/reports/:id/generate', async (req, res) => {
     }
 });
 
-// Маршрут для получения топ-10 самых активных компьютеров
-app.get('/api/most_active_computers', async (req, res) => {
+app.get('/api/top-computers', async (req, res) => {
     try {
-        const result = await db.query(
-            `SELECT c."Domain_name", 
-                    SUM(EXTRACT(EPOCH FROM ac."Session_time") / 3600) AS "TotalSessionTime"
-             FROM "Account_Computer" ac
-             JOIN "Computer" c ON ac."PK_Computer" = c."PK_Computer"
-             WHERE ac."Session_time" >= date_trunc('month', CURRENT_DATE)
-             GROUP BY c."Domain_name"
-             ORDER BY "TotalSessionTime" DESC
-             LIMIT 10`
-        );
-
+        const result = await db.query(`
+            SELECT c."Domain_name", 
+                   SUM(EXTRACT(HOUR FROM ac."Session_time") + EXTRACT(MINUTE FROM ac."Session_time") / 60 + EXTRACT(SECOND FROM ac."Session_time") / 3600) AS "TotalHours"
+            FROM "Account_Computer" ac
+            JOIN "Computer" c ON ac."PK_Computer" = c."PK_Computer"
+            GROUP BY c."Domain_name"
+            ORDER BY "TotalHours" DESC
+            LIMIT 10
+        `);
         res.json(result.rows);
     } catch (err) {
-        console.error('Ошибка получения данных о самых активных компьютерах:', err);
+        console.error('Ошибка получения данных о компьютерах:', err);
         res.status(500).json({ error: 'Ошибка получения данных' });
     }
 });
+
+app.get('/api/top-users', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT u."Login", 
+                   SUM(EXTRACT(HOUR FROM ac."Session_time") + EXTRACT(MINUTE FROM ac."Session_time") / 60 + EXTRACT(SECOND FROM ac."Session_time") / 3600) AS "TotalHours"
+            FROM "Account_Computer" ac
+            JOIN "Account" u ON ac."PK_Account" = u."PK_Account"
+            GROUP BY u."Login"
+            ORDER BY "TotalHours" DESC
+            LIMIT 10
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Ошибка получения данных о пользователях:', err);
+        res.status(500).json({ error: 'Ошибка получения данных' });
+    }
+});
+
 
 /////////////////////////////////////////////////////////////////
 
@@ -536,28 +543,6 @@ app.get('/header.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'header.html'));
 });
 
-const requireAuth = (req, res, next) => {
-    if (!req.session.user) {  // Если сессия не существует, пользователь не авторизован
-        return res.redirect('/login.html');  // Перенаправляем на страницу входа
-    }
-    next();  
-};
-
-app.get('/account', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'account.html'));
-});
-
-app.get('/computers', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'computers.html'));
-});
-
-app.get('/report', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'report.html'));
-});
-
-app.get('/management', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'report.html'));
-});
 
 app.post('/login.html', passport.authenticate('local', {
     successRedirect: '/main',
@@ -565,22 +550,13 @@ app.post('/login.html', passport.authenticate('local', {
     failureFlash: true
 }));
 
-app.get('/main', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'main.html'));
-});
-
 app.get('/logout', (req, res) => {
-    req.logout((err) => {
+    req.session.destroy(err => {
         if (err) {
             return res.status(500).json({ error: 'Ошибка выхода' });
         }
-        req.session.destroy((err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Ошибка очистки сессии' });
-            }
-            res.clearCookie('connect.sid');  // Убедитесь, что удаляется cookie сессии
-            res.redirect('/login.html');  // Перенаправляем на страницу логина
-        });
+        res.clearCookie('connect.sid');
+        res.redirect('/login.html');
     });
 });
 

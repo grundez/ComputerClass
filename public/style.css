@@ -286,6 +286,16 @@ body {
     overflow: hidden;
 }
 
+.filters-container .row {
+    align-items: center; /* Выравнивание по центру */
+}
+
+button.btn-primary {
+    height: 100%; /* Увеличивает кнопку до высоты строки */
+    line-height: 1; /* Задает интерлиньяж для текста внутри кнопки */
+    padding: 10px 20px; /* Увеличивает внутренние отступы */
+    white-space: nowrap; /* Предотвращает перенос текста внутри кнопки */
+}
 
 
 

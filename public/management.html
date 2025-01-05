@@ -50,6 +50,12 @@
                         <div class="col-md-6">
                             <button id="reset-btn" class="btn btn-secondary mt-3">Сбросить</button>
                         </div>
+                        
+                        <div class="col-md-5 text-right">
+                            <!-- Кнопка для добавления пользователя -->
+                            <button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#addUserModal">Добавить пользователя</button>
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -68,8 +74,7 @@
     </div>
 
 
-    <!-- Кнопка для добавления пользователя -->
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Добавить пользователя</button>
+    
 
     <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-logs">
@@ -166,8 +171,23 @@
 </div>
 
 <script>
-    // Устанавливаем максимальную дату для поля даты рождения
-    document.getElementById('user-dob').max = new Date().toISOString().split("T")[0];
+    document.addEventListener('DOMContentLoaded', () => {
+        const dateInput = document.getElementById('user-dob');
+
+        // Устанавливаем максимальную дату как текущую
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('max', today);
+
+        // Запрещаем ввод текста с клавиатуры
+        dateInput.addEventListener('keydown', (e) => {
+            e.preventDefault();
+        });
+
+        // Также блокируем вставку текста через контекстное меню
+        dateInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+    });
 </script>
 
     <!-- Модальное окно для отображения подробной информации -->

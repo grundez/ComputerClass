@@ -71,14 +71,18 @@ async function loadComputers() {
             const logs = await fetchLogs(computerId);
             
             // Преобразуем логи в строки таблицы
-            const logsList = logs.map(log => `
-                <tr>
-                    <td>${log.Action_date}</td>
-                    <td>${log.Action_time}</td>
-                    <td>${log.IP_address}</td>
-                    <td>${log.Action}</td>
-                </tr>
-            `).join('');
+            const logsList = logs.map(log => {
+                const formattedDate = log.Action_date.split('T')[0]; // Убираем часть после T
+                const formattedTime = log.Action_time.split('.')[0]; // Убираем часть после точки
+                return `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td>${formattedTime}</td>
+                        <td>${log.IP_address}</td>
+                        <td>${log.Action}</td>
+                    </tr>
+                `;
+            }).join('');
 
             // Открываем модальное окно с логами
             $('#logsModal').modal('show');

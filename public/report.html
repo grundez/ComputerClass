@@ -50,10 +50,20 @@
       </tr>
       <tr>
         <td>2</td>
-        <td>Самый активный компьютер</td>
+        <td>Самые активные компьютеры</td>
         <td>04.01.2024</td>
         <td>
-          <button id="loadMostActiveComputerBtn" class="btn btn-info btn-sm">
+          <button id="loadTopComputersChartBtn" class="btn btn-info btn-sm">
+            <i class="bi bi-bar-chart-line"></i> Диаграмма
+          </button>
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Самые активные пользователи</td>
+        <td>04.01.2024</td>
+        <td>
+          <button id="loadTopUsersChartBtn" class="btn btn-info btn-sm">
             <i class="bi bi-bar-chart-line"></i> Диаграмма
           </button>
         </td>
@@ -120,54 +130,37 @@
             console.error('Ошибка при загрузке данных:', error);
         }
     }
-
     window.onload = loadComputers;
 
-    // Функция для загрузки и отображения диаграммы самых активных компьютеров
-    async function loadMostActiveComputers() {
+    // Топ активных комп
+    async function loadTopComputersChart() {
         try {
-            const response = await fetch('/api/most_active_computers');
+            const response = await fetch('/api/top-computers');
             const data = await response.json();
 
+            // Преобразуем TotalHours в число
             const labels = data.map(item => item.Domain_name);
+            const hours = data.map(item => parseFloat(item.TotalHours)); // Преобразование строки в число
 
-            // Преобразуем время в часы и минуты
-            const sessionTimes = data.map(item => {
-                const totalMinutes = item.TotalSessionTime * 60; // Суммарное время в минутах
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = Math.round(totalMinutes % 60);
-                return `${hours}ч ${minutes}мин`;
-            });
-
-            const rawSessionTimes = data.map(item => item.TotalSessionTime); // Для отображения точных значений в подсказках
-
-            const ctx = document.getElementById('mostActiveComputerChart').getContext('2d');
+            const ctx = document.getElementById('topComputersChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Суммарное время сессий',
-                        data: rawSessionTimes,
-                        backgroundColor: '#007bff',
-                        borderColor: '#fff',
+                        label: 'Общее время (часы)',
+                        data: hours.map(h => h.toFixed(2)), // Убедимся, что каждый элемент округлен до 2 знаков
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: true,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                        },
                         tooltip: {
                             callbacks: {
-                                // Форматируем отображение времени в подсказке
-                                label: function(tooltipItem) {
-                                    const totalMinutes = rawSessionTimes[tooltipItem.dataIndex] * 60; // Суммарное время в минутах
-                                    const hours = Math.floor(totalMinutes / 60);
-                                    const minutes = Math.round(totalMinutes % 60);
-                                    return `${tooltipItem.label}: ${hours}ч ${minutes}мин`;
+                                label: function(context) {
+                                    return `Время: ${context.raw} ч`;
                                 }
                             }
                         }
@@ -182,7 +175,7 @@
                         y: {
                             title: {
                                 display: true,
-                                text: 'Суммарное время (часы)'
+                                text: 'Время (часы)'
                             },
                             beginAtZero: true
                         }
@@ -190,14 +183,64 @@
                 }
             });
         } catch (error) {
-            console.error('Ошибка при загрузке данных о самых активных компьютерах:', error);
+            console.error('Ошибка загрузки данных для диаграммы:', error);
         }
     }
 
+    // Топ активных комп
+    async function loadTopUsersChart() {
+        try {
+            const response = await fetch('/api/top-users');
+            const data = await response.json();
 
+            // Преобразуем TotalHours в число
+            const labels = data.map(item => item.Login);
+            const hours = data.map(item => parseFloat(item.TotalHours)); // Преобразование строки в число
 
-    // Добавляем обработчик для кнопки загрузки диаграммы самых активных компьютеров
-    document.getElementById('loadMostActiveComputerBtn').addEventListener('click', loadMostActiveComputers);
+            const ctx = document.getElementById('topUsersChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Общее время (часы)',
+                        data: hours.map(h => h.toFixed(2)), // Убедимся, что каждый элемент округлен до 2 знаков
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Время: ${context.raw} ч`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Пользователи'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Время (часы)'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки данных для диаграммы:', error);
+        }
+    }
   </script>
 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -262,24 +305,40 @@
         const chartDiv = document.createElement('div');
         chartDiv.innerHTML = 
           `<h3>Статусы компьютеров</h3>
-          <canvas id="computerStatusChart" width="350" height="350"></canvas>`;
+          <canvas id="computerStatusChart" width="600" height="400"></canvas>`;
         loadComputers(); // Загружаем данные для диаграммы сразу после её создания
         return chartDiv;
       });
     });
-  
-    // Обработчик для кнопки диаграммы "Самый активный компьютер"
-    document.getElementById('loadMostActiveComputerBtn').addEventListener('click', () => {
-      toggleReport('mostActiveChartContainer', () => {
-        const activeChartDiv = document.createElement('div');
-        activeChartDiv.innerHTML = 
-          `<h3>Самый активный компьютер</h3>
-          <canvas id="mostActiveComputerChart" width="350" height="350"></canvas>`;
-        loadMostActiveComputers(); // Загружаем данные для диаграммы сразу после её создания
-        return activeChartDiv;
-      });
+
+    // Обработчик для диаграммы "Топ-10 самых активных компьютеров"
+    document.getElementById('loadTopComputersChartBtn').addEventListener('click', () => {
+        toggleReport('topComputersChartContainer', () => {
+            const chartDiv = document.createElement('div');
+            chartDiv.innerHTML = `
+                <h3>Топ-10 самых активных компьютеров</h3>
+                <canvas id="topComputersChart" width="500" height="300"></canvas>
+            `;
+            loadTopComputersChart();
+            return chartDiv;
+        });
+    });
+
+    // Обработчик для диаграммы "Топ-10 самых активных аккаунтов"
+    document.getElementById('loadTopUsersChartBtn').addEventListener('click', () => {
+        toggleReport('topUsersChartContainer', () => {
+            const chartDiv = document.createElement('div');
+            chartDiv.innerHTML = `
+                <h3>Топ-10 самых активных пользователей</h3>
+                <canvas id="topUsersChart" width="500" height="300"></canvas>
+            `;
+            loadTopUsersChart();
+            return chartDiv;
+        });
     });
   </script>
 
 </body>
 </html>
+
+

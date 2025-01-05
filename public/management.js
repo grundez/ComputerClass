@@ -62,9 +62,12 @@ function displayUsers() {
             <p><strong>Дата рождения:</strong> ${formattedDate}</p>
         `);
         modal.find('#delete-user-btn').data('login', user.Login);
+        modal.find('#show-logs-btn').off('click');
         modal.find('#show-logs-btn').click(function() {
             // Открыть модальное окно с логами
             $('#logsModal').modal('show');
+            const logsTable = document.getElementById('logs-table');
+            logsTable.innerHTML = '';
             loadUserLogs(user.PK_User);
         });
         //loadUserLogs(user.PK_User);
@@ -255,7 +258,8 @@ document.getElementById("save-user-btn").addEventListener("click", async () => {
             throw new Error('Ошибка при добавлении пользователя');
         }
         else{
-            alert("Пользователь успешно добавлен!");
+            //alert("Пользователь успешно добавлен!");
+            showNotification('Пользователь успешно добавлен!', 'success');
             loadUsers();
         }
     } catch (error) {
@@ -284,7 +288,43 @@ document.getElementById('delete-user-btn').addEventListener('click', async () =>
         throw new Error('Ошибка при удалении пользователя');
     }
     else{
-        alert("Пользователь успешно удален!");
+        //alert("Пользователь успешно удален!");
+        showNotification('Пользователь успешно удален!', 'success');
         loadUsers();
     }
 });
+
+function showNotification(message, type = 'info') {
+    const notificationContainer = document.getElementById('notification-container') || createNotificationContainer();
+    const notification = document.createElement('div');
+
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.role = 'alert';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    notificationContainer.appendChild(notification);
+
+    // Автоматическое скрытие уведомления через 5 секунд
+    setTimeout(() => {
+        if (notificationContainer.contains(notification)) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function createNotificationContainer() {
+    const existingContainer = document.getElementById('notification-container');
+    if (existingContainer) return existingContainer;
+
+    const container = document.createElement('div');
+    container.id = 'notification-container';
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '1050';
+    document.body.appendChild(container);
+    return container;
+}
